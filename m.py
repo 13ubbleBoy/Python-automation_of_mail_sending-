@@ -1,9 +1,12 @@
 from tkinter import *
 import os
 import smtplib
-from email.message import EmailMessage
-import tkinter  # its a class to send messages in a better way. We no need to creater everything seperately
+from email.message import EmailMessage  # its a class to send messages in a better way. We no need to creater everything seperately
+import tkinter 
 from tkinter import filedialog
+#import schedule
+import time
+import datetime as dt
 
 root = Tk()
 
@@ -28,7 +31,7 @@ EMAIL_ADDRESS = os.environ.get('acc')
 EMAIL_PASSWORD = os.environ.get('pass')
 
 msg = EmailMessage()  # created an object of 'EmailMessage' class
-msg.set_content('Sending some images...')
+#msg.set_content('Sending some images...')
 
 # attach files
 files = []
@@ -39,16 +42,21 @@ def select_file():
     files.append(str(root.filename.name))
 
 
+auto_to = to.get()
 
 def send():
     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-        msg['Subject'] = 'Images'
+        msg['Subject'] = sub.get()
         msg['From'] = EMAIL_ADDRESS
         msg['To'] = to.get()
-        msg['Cc'] = cc.get()
-        msg['Bcc'] = bcc.get()
-
+        if(cc.get()):
+            msg['Cc'] = cc.get()
+        if(bcc.get()):
+            msg['Bcc'] = bcc.get()
         
+        mssg = message.get()
+        msg.set_content(mssg)
+
         for file in files:
             with open(file, 'rb') as f:  # 'rb' = read bytes
                 file_data = f.read()  # getting access
@@ -56,11 +64,10 @@ def send():
                 file_name = f.name
             msg.add_attachment(file_data, maintype='application', subtype='octet-stream', filename=file_name)  # for pdf : maintype = 'application', subtype = 'octet-stream' and for images : maintyp='image', subtype=f.name
 
-
         smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
         smtp.send_message(msg)
-
-
+        smtp.quit()
+        scheduled_mail()
 
 
 label_email = Label(root, text='To', font=('calibre', 13), pady=10, padx=40)
@@ -86,6 +93,7 @@ email_entry.place(relx=0.4, rely=0.04)
 label_sub.place(relx=0.25, rely=0.078)
 sub_entry.place(relx=0.4, rely=0.1)
 
+
 label_cc.place(relx=0.29, rely=0.14)
 cc_entry.place(relx=0.4, rely=0.16)
 
@@ -102,4 +110,42 @@ btn_files.place(relx=0.5, rely=0.35, anchor=CENTER)
 btn.place(relx=0.5, rely=0.8, anchor=CENTER)
 
 
+
+mg = EmailMessage()
+
+def scheduled_mail():
+    sbj = "Images you may like"
+    msge = "Greetings Sir\n\nThis is an automated mail.\nYou bought some images from us, we do have many more imamges you can check them out.\nHere are some of our top rated images."
+    img_files = ['P:\Media\Wallpapers\wallpapers\\art.jpg', 'P:\Media\Wallpapers\wallpapers\\evening.jpg', 'P:\Media\Wallpapers\wallpapers\\tornado.jpg']
+
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+        mg['Subject'] = sbj
+        mg['From'] = EMAIL_ADDRESS
+        mg['To'] = auto_to
+        
+        mg.set_content(msge)
+
+        
+        for file in img_files:
+            with open(file, 'rb') as f:
+                file_data = f.read()
+                file_name = f.name
+            mg.add_attachment(file_data, maintype='application', subtype='octet-stream', filename=file_name)  # for pdf : maintype = 'application', subtype = 'octet-stream' and for images : maintyp='image', subtype=f.name
+
+
+        smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        smtp.send_message(mg)
+        smtp.quit()
+
+send_time = dt.datetime(2022,1,2,1,25,0) # set your sending time in UTC
+time.sleep(send_time.timestamp() - time.time())
+scheduled_mail()
+print('email sent')
+
+
+
 root.mainloop()
+
+
+
+
